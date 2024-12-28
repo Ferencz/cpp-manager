@@ -8,7 +8,7 @@
 ## Installation
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/cpp-manager.git
+   git clone https://github.com/Ferencz/cpp-manager.git
    cd cpp-manager
    ```
 
