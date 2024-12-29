@@ -4,7 +4,6 @@
 
 #include <string>
 #include <vector>
-#include <filesystem>
 
 class ProjectManager {
 public:
@@ -26,7 +25,10 @@ private:
     void createDirectory(const std::string& path);
     void createFile(const std::string& path, const std::string& content);
     void executeCommand(const std::string& command);
+    void executeCommandWithOutput(const std::string& command); // New method
     void deleteFile(const std::string& path);
+
+    void setupPythonVirtualEnv();
 };
 
 #endif // PROJECTMANAGER_H
