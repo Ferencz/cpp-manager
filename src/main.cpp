@@ -8,12 +8,12 @@ void printHelp() {
               << "  init <project-name>        Initialize a new C++ project\n"
               << "  add <dependency>           Add a dependency\n"
               << "  build                      Build the project\n"
-              << "  test                       Run tests\n"
               << "  create header <name>       Create a header file\n"
               << "  create module <name> [--header] Create a module (with optional header)\n"
               << "  delete module <name>       Delete a module\n"
+              << "  help                       Show this help message\n"
               << "  src [--list]               Edit or list source files\n"
-              << "  help                       Show this help message\n";
+              << "  test                       Run tests\n";
 }
 
 int main(int argc, char* argv[]) {

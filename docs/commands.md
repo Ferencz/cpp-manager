@@ -15,11 +15,6 @@ cpp-manager add <dependency-name>
 cpp-manager build
 ```
 
-## Run Tests
-```bash
-cpp-manager test
-```
-
 ## Create a Header
 ```bash
 cpp-manager create header <header-name>
@@ -43,4 +38,10 @@ cpp-manager src --list
 ### Scaffold a Module
 ```bash
 cpp-manager src
+```
+
+
+## Run Tests
+```bash
+cpp-manager test
 ```
