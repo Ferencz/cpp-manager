@@ -214,3 +214,172 @@ void ProjectManager::deleteFile(const std::string& path) {
         fs::remove(path);
     }
 }
+
+void ProjectManager::srcCommand(const std::string& subCommand) {
+    if (subCommand == "--list") {
+        listSourceFiles();
+    } else {
+        std::string fileName;
+        std::cout << "Enter the file name (e.g., query.cpp): ";
+        std::getline(std::cin, fileName);
+
+        if (fileName.empty()) {
+            std::cerr << "File name cannot be empty." << std::endl;
+            return;
+        }
+
+        editSourceFile(fileName);
+    }
+}
+
+void ProjectManager::listSourceFiles() {
+    std::string srcPath = projectName + "/src";
+    std::cout << "Source files in " << srcPath << ":" << std::endl;
+
+    for (const auto& entry : fs::directory_iterator(srcPath)) {
+        if (entry.path().extension() == ".cpp") {
+            std::cout << "  " << entry.path().filename().string() << std::endl;
+        }
+    }
+}
+
+void ProjectManager::editSourceFile(const std::string& fileName) {
+    std::string filePath = projectName + "/src/" + fileName;
+
+     // Check if the file is being created for the first time
+    bool isNewFile = !fs::exists(filePath);
+
+    // Create the file if it doesn't exist
+    if (isNewFile) {
+        std::ofstream file(filePath);
+        file << "#include <iostream>\n\n"; // Include iostream for new files
+        file.close();
+        std::cout << "Created file: " << filePath << std::endl;
+    }
+
+    std::cout << "Editing file: (" << fileName << ")" << std::endl;
+
+    while (true) {
+        std::string input;
+        std::cout << "Enter class/struct/function [name] (or 'quit' to exit): ";
+        std::getline(std::cin, input);
+
+        if (input == "quit") {
+            break;
+        }
+
+        if (input.find("class") == 0 || input.find("struct") == 0) {
+            std::string type = input.substr(0, input.find(' '));
+            std::string name = input.substr(input.find(' ') + 1);
+            std::string code = createClassOrStructPrompt(type, name);
+            std::ofstream file(filePath, std::ios::app);
+            file << code << std::endl;
+            file.close();
+        } else if (input.find("function") == 0) {
+            std::string name = input.substr(input.find(' ') + 1);
+            std::string code = createFunctionPrompt(name);
+            std::ofstream file(filePath, std::ios::app);
+            file << code << std::endl;
+            file.close();
+        } else {
+            std::cerr << "Invalid input. Use 'class', 'struct', or 'function'." << std::endl;
+        }
+    }
+}
+
+std::string ProjectManager::createFunctionPrompt(const std::string& name, bool nested) {
+    std::string description;
+    std::cout << "(" << name << ")Enter function description: ";
+    std::getline(std::cin, description);
+
+    std::string returnType;
+    std::cout << "(" << name << ")Enter return type: ";
+    std::getline(std::cin, returnType);
+
+    std::vector<std::pair<std::string, std::string>> parameters;
+    while (true) {
+        std::string param;
+        std::cout << "(" << name << ") Enter parameter (name type) or press Enter to finish: ";
+        std::getline(std::cin, param);
+
+        if (param.empty()) {
+            break;
+        }
+
+        size_t space = param.find(' ');
+        if (space == std::string::npos) {
+            std::cerr << "Invalid parameter format. Use 'name type'." << std::endl;
+            continue;
+        }
+
+        std::string paramName = param.substr(0, space);
+        std::string paramType = param.substr(space + 1);
+        parameters.push_back({paramName, paramType});
+    }
+
+    std::string code = returnType + " " + name + "(";
+    for (size_t i = 0; i < parameters.size(); ++i) {
+        code += parameters[i].second + " " + parameters[i].first;
+        if (i < parameters.size() - 1) {
+            code += ", ";
+        }
+    }
+    code += ") {\n";
+    code += nested ?"\t// " + description + "\n" : "// " + description + "\n";
+    code += nested ? "\t    // Write your code\n" :"    // Write your code\n";
+    code += nested ? "\t}\n" : "}\n";
+
+    return code;
+}
+
+std::string ProjectManager::createClassOrStructPrompt(const std::string& type, const std::string& name) {
+    std::string description;
+    std::cout << "(" << name << ") Enter " << type << " description: ";
+    std::getline(std::cin, description);
+
+    std::vector<std::pair<std::string, std::string>> attributes;
+    while (true) {
+        std::string attr;
+        std::cout << "(" << name << ") Enter attribute (name type) or press Enter to finish: ";
+        std::getline(std::cin, attr);
+
+        if (attr.empty()) {
+            break;
+        }
+
+        size_t space = attr.find(' ');
+        if (space == std::string::npos) {
+            std::cerr << "Invalid attribute format. Use 'name type'." << std::endl;
+            continue;
+        }
+
+        std::string attrName = attr.substr(0, space);
+        std::string attrType = attr.substr(space + 1);
+        attributes.push_back({attrName, attrType});
+    }
+
+    std::string code = type + " " + name + " {\n";
+    code += "// " + description + "\n";
+    code += "public:\n";
+    for (const auto& attr : attributes) {
+        code += "    " + attr.second + " " + attr.first + ";\n";
+    }
+
+     // Add methods
+    while (true) {
+        std::string methodName;
+        std::cout << "(" << name << ") Add method (name) or press Enter to finish: ";
+        std::getline(std::cin, methodName);
+
+        if (methodName.empty()) {
+            break;
+        }
+
+        std::string methodCode = createFunctionPrompt(methodName, true);
+        code += "\t";
+        code += methodCode;
+    }
+    code += "};\n";
+
+    return code;
+}

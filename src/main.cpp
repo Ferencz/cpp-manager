@@ -1,4 +1,3 @@
-// src/main.cpp
 #include "ProjectManager.h"
 #include <iostream>
 #include <string>
@@ -13,6 +12,7 @@ void printHelp() {
               << "  create header <name>       Create a header file\n"
               << "  create module <name> [--header] Create a module (with optional header)\n"
               << "  delete module <name>       Delete a module\n"
+              << "  src [--list]               Edit or list source files\n"
               << "  help                       Show this help message\n";
 }
 
@@ -57,6 +57,10 @@ int main(int argc, char* argv[]) {
         std::string name = argv[3];
         ProjectManager manager(".");
         manager.deleteModule(name);
+    } else if (command == "src") {
+        std::string subCommand = (argc >= 3) ? argv[2] : "";
+        ProjectManager manager(".");
+        manager.srcCommand(subCommand);
     } else if (command == "help") {
         printHelp();
     } else {

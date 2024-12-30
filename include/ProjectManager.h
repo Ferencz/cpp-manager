@@ -17,6 +17,7 @@ public:
     void createHeader(const std::string& headerName);
     void createModule(const std::string& moduleName, bool createHeader = false);
     void deleteModule(const std::string& moduleName);
+    void srcCommand(const std::string& subCommand = "");
 
 private:
     std::string projectName;
@@ -29,6 +30,11 @@ private:
 
     void setupPythonVirtualEnv();
     bool promptToInstallPackageManager();
+
+    void listSourceFiles();
+    void editSourceFile(const std::string& fileName);
+    std::string createClassOrStructPrompt(const std::string& type);
+    std::string createFunctionPrompt(const std::string &name, bool nested = false);
 };
 
 #endif // PROJECTMANAGER_H
