@@ -91,25 +91,7 @@ Contributions are welcome! Please follow these steps:
 4. Push to the branch (`git push origin feature/YourFeature`).
 5. Open a pull request.
 
-## License
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
 ## Acknowledgments
-- [Conan](https://conan.io/) for dependency management.
-- [vcpkg](https://vcpkg.io/) for dependency management.
+- Optional [Conan](https://conan.io/) for dependency management.
+- Optional [vcpkg](https://vcpkg.io/) for dependency management.
 - [CMake](https://cmake.org/) for build automation.
-
-## **2. Documentation**
-Create a `docs` directory to store detailed documentation. Here’s a suggested structure:
-
-### **Directory Structure**
-
-```
-docs/
-├── getting-started.md
-├── commands.md
-├── dependency-management.md
-├── faq.md
-└── contributing.md
-```
-
