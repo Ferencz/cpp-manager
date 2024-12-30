@@ -73,6 +73,16 @@ cpp-manager create module MyClass --header
 cpp-manager delete module MyClass
 ```
 
+### List Modules
+```bash
+cpp-manager src --list
+```
+
+### Scaffold a Module
+```bash
+cpp-manager src
+```
+
 ## Contributing
 Contributions are welcome! Please follow these steps:
 1. Fork the repository.
