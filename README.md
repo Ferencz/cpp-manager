@@ -45,7 +45,7 @@ cpp-manager init MyProject
 
 ### Add a Dependency
 ```bash
-cpp-manager add dependency zlib
+cpp-manager add zlib/1.2.11
 ```
 
 ### Build the Project

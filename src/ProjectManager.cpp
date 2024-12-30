@@ -23,6 +23,14 @@ void ProjectManager::initializeProject() {
     if (promptToInstallPackageManager()) {
         // Set up Python virtual environment in the root folder
         setupPythonVirtualEnv();
+        // Create conanfile.txt
+        std::string conanfileContent = R"(
+[requires]
+
+[generators]
+CMakeToolchain
+)";
+        createFile(projectName + "/conanfile.txt", conanfileContent);
     }
 
     executeCommand("cd " + projectName + " && git init");
@@ -91,9 +99,8 @@ bool ProjectManager::promptToInstallPackageManager() {
 }
 
 void ProjectManager::setupPythonVirtualEnv() {
-    // Path to the virtual environment
-    std::string manager = "manager";
-    std::string venvPath = projectName + "/" + manager;
+    // Path to the virtual environment in the project root folder
+    std::string venvPath = projectName + "/manager";
 
     // Check if the virtual environment already exists
     if (fs::exists(venvPath)) {
@@ -101,22 +108,40 @@ void ProjectManager::setupPythonVirtualEnv() {
         return;
     }
 
-
-    std::cout << "Setting up virtual environment (" << manager << ")" << std::endl;
     // Create Python virtual environment
     std::string createVenvCommand = "python3 -m venv " + venvPath;
     executeCommandWithOutput(createVenvCommand);
 
     // Install Conan in the virtual environment
-    std::string installConanCommand = venvPath + "/bin/pip install conan"; // Use the virtual environment's pip directly
+    std::string installConanCommand = venvPath + "/bin/pip install conan";
     executeCommandWithOutput(installConanCommand);
 
-    std::cout << "(" << manager << ") virtual environment created and Conan installed successfully " << std::endl;
+    std::cout << "Python virtual environment created and Conan installed in " << venvPath << std::endl;
 }
 
 void ProjectManager::addDependency(const std::string& dependency) {
-    std::string command = "cd " + projectName + " && source manager/bin/activate && conan install " + dependency + " --build=missing";
-    executeCommandWithOutput(command); // Use executeCommandWithOutput for real-time output
+    // Update conanfile.txt with the new dependency
+    std::string conanfilePath = projectName + "/conanfile.txt";
+    std::ifstream conanfileIn(conanfilePath);
+    std::string conanfileContent((std::istreambuf_iterator<char>(conanfileIn)), std::istreambuf_iterator<char>());
+    conanfileIn.close();
+
+    // Add the dependency to the [requires] section
+    size_t requiresPos = conanfileContent.find("[requires]");
+    if (requiresPos != std::string::npos) {
+        size_t insertPos = conanfileContent.find("\n", requiresPos) + 1;
+        conanfileContent.insert(insertPos, dependency + "\n");
+    }
+
+    // Write the updated conanfile.txt
+    std::ofstream conanfileOut(conanfilePath);
+    conanfileOut << conanfileContent;
+    conanfileOut.close();
+
+    // Install the dependency using Conan
+    std::string installCommand = "cd " + projectName + " && source manager/bin/activate && conan install . --build=missing";
+    executeCommandWithOutput(installCommand);
+
     dependencies.push_back(dependency);
     std::cout << "Added dependency: " << dependency << std::endl;
 }
