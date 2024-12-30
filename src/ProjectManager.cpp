@@ -19,8 +19,11 @@ void ProjectManager::initializeProject() {
     createDirectory(projectName + "/include");
     createDirectory(projectName + "/test");
 
-    // Set up Python virtual environment in the root folder
-    setupPythonVirtualEnv();
+    // Prompt to install the package manager
+    if (promptToInstallPackageManager()) {
+        // Set up Python virtual environment in the root folder
+        setupPythonVirtualEnv();
+    }
 
     executeCommand("cd " + projectName + " && git init");
 
@@ -72,9 +75,25 @@ int main() {
     std::cout << "Project initialized successfully!" << std::endl;
 }
 
+bool ProjectManager::promptToInstallPackageManager() {
+    std::string response;
+    std::cout << "Do you want to install the package manager (Conan)? [y/N]: ";
+    std::getline(std::cin, response);
+
+    // Default to 'N' if the response is empty
+    if (response.empty() || (response[0] != 'y' && response[0] != 'Y')) {
+        std::cout << "Skipping package manager installation." << std::endl;
+        return false;
+    }
+
+    std::cout << "Installing Conan..." << std::endl;
+    return true;
+}
+
 void ProjectManager::setupPythonVirtualEnv() {
     // Path to the virtual environment
-    std::string venvPath = projectName + "/manager";
+    std::string manager = "manager";
+    std::string venvPath = projectName + "/" + manager;
 
     // Check if the virtual environment already exists
     if (fs::exists(venvPath)) {
@@ -82,6 +101,8 @@ void ProjectManager::setupPythonVirtualEnv() {
         return;
     }
 
+
+    std::cout << "Setting up virtual environment (" << manager << ")" << std::endl;
     // Create Python virtual environment
     std::string createVenvCommand = "python3 -m venv " + venvPath;
     executeCommandWithOutput(createVenvCommand);
@@ -90,7 +111,7 @@ void ProjectManager::setupPythonVirtualEnv() {
     std::string installConanCommand = venvPath + "/bin/pip install conan"; // Use the virtual environment's pip directly
     executeCommandWithOutput(installConanCommand);
 
-    std::cout << "(" << venvPath << ") virtual environment created and Conan installed successfully " << std::endl;
+    std::cout << "(" << manager << ") virtual environment created and Conan installed successfully " << std::endl;
 }
 
 void ProjectManager::addDependency(const std::string& dependency) {

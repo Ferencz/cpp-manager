@@ -29,6 +29,7 @@ private:
     void deleteFile(const std::string& path);
 
     void setupPythonVirtualEnv();
+    bool promptToInstallPackageManager();
 };
 
 #endif // PROJECTMANAGER_H
