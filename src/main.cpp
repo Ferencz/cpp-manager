@@ -1,12 +1,13 @@
 #include "ProjectManager.h"
 #include <iostream>
 #include <string>
+#include <unordered_map>
+#include <functional>
 
 void printHelp() {
     std::cout << "Usage: cpp-manager <command> [options]\n"
               << "Commands:\n"
               << "  init <project-name>        Initialize a new C++ project\n"
-              << "  add <dependency>           Add a dependency\n"
               << "  build                      Build the project\n"
               << "  test                       Run tests\n"
               << "  create header <name>       Create a header file\n"
@@ -22,47 +23,70 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    std::string command = argv[1];
+    std::unordered_map<std::string, std::function<void()>> commands;
 
-    if (command == "init" && argc == 3) {
-        std::string projectName = argv[2];
-        ProjectManager manager(projectName);
-        manager.initializeProject();
-    } else if (command == "add" && argc == 3) {
-        std::string dependency = argv[2];
-        ProjectManager manager(".");
-        manager.addDependency(dependency);
-    } else if (command == "build") {
+    commands["init"] = [&]() {
+        if (argc == 3) {
+            std::string projectName = argv[2];
+            ProjectManager manager(projectName);
+            manager.initializeProject();
+        } else {
+            printHelp();
+        }
+    };
+
+    commands["build"] = [&]() {
         ProjectManager manager(".");
         manager.buildProject();
-    } else if (command == "test") {
+    };
+
+    commands["test"] = [&]() {
         ProjectManager manager(".");
         manager.runTests();
-    } else if (command == "create" && argc >= 4) {
-        std::string subCommand = argv[2];
-        std::string name = argv[3];
-        ProjectManager manager(".");
+    };
 
-        if (subCommand == "header") {
-            manager.createHeader(name);
-        } else if (subCommand == "module") {
-            bool createHeader = (argc >= 5 && std::string(argv[4]) == "--header");
-            manager.createModule(name, createHeader);
+    commands["create"] = [&]() {
+        if (argc >= 4) {
+            std::string type = argv[2];
+            std::string name = argv[3];
+            ProjectManager manager(".");
+            if (type == "header") {
+                manager.createHeader(name);
+            } else if (type == "module") {
+                bool createHeader = (argc >= 5 && std::string(argv[4]) == "--header");
+                manager.createModule(name, createHeader);
+            } else {
+                std::cerr << "Invalid create command.\n";
+                printHelp();
+            }
         } else {
-            std::cerr << "Invalid create command.\n";
             printHelp();
-            return 1;
         }
-    } else if (command == "delete" && argc == 4 && std::string(argv[2]) == "module") {
-        std::string name = argv[3];
-        ProjectManager manager(".");
-        manager.deleteModule(name);
-    } else if (command == "src") {
+    };
+
+    commands["delete"] = [&]() {
+        if (argc == 4 && std::string(argv[2]) == "module") {
+            std::string name = argv[3];
+            ProjectManager manager(".");
+            manager.deleteModule(name);
+        } else {
+            printHelp();
+        }
+    };
+
+    commands["src"] = [&]() {
         std::string subCommand = (argc >= 3) ? argv[2] : "";
         ProjectManager manager(".");
         manager.srcCommand(subCommand);
-    } else if (command == "help") {
+    };
+
+    commands["help"] = [&]() {
         printHelp();
+    };
+
+    std::string command = argv[1];
+    if (commands.find(command) != commands.end()) {
+        commands[command]();
     } else {
         std::cerr << "Invalid command or arguments.\n";
         printHelp();
