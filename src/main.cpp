@@ -7,6 +7,18 @@
 #include <unistd.h>
 #include <fstream>
 #include <filesystem>
+#include <vector>
+
+struct LLM {
+    std::string name;
+    std::string apiEndpoint;
+};
+
+std::vector<LLM> knownLLMs = {
+    {"gpt", "https://api.openai.com/v1/engines/davinci-codex/completions"},
+    {"llama", "https://api.llama.ai/v1/completions"}
+    // Add more LLMs and their endpoints here
+};
 
 void printHelp() {
     std::cout << "Usage: cpp-manager <command> [options]\n"
@@ -56,6 +68,47 @@ void storeApiKey(const std::string& apiKey, const std::string& filePath) {
     } else {
         std::cerr << "Failed to store API key.\n";
     }
+}
+
+std::string selectOption(const std::vector<std::string>& options) {
+    int selected = 0;
+
+    termios oldt, newt;
+    tcgetattr(STDIN_FILENO, &oldt);
+    newt = oldt;
+    newt.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+
+    std::cout << "Select an option (use arrow keys to navigate and Enter to select):\n";
+    while (true) {
+        for (int i = 0; i < options.size(); ++i) {
+            if (i == selected) {
+                std::cout << "\033[3;44m\033[1m" << options[i] << "\033[0m\n"; // Light blue background, bold
+            } else {
+                std::cout << options[i] << "\n";
+            }
+        }
+
+        char ch;
+        std::cin.read(&ch, 1);
+        if (ch == '\033') { // Arrow keys start with an escape character
+            std::cin.read(&ch, 1); // Skip the '[' character
+            std::cin.read(&ch, 1);
+            if (ch == 'A') { // Up arrow
+                selected = (selected - 1 + options.size()) % options.size();
+            } else if (ch == 'B') { // Down arrow
+                selected = (selected + 1) % options.size();
+            }
+        } else if (ch == '\n') { // Enter key
+            break;
+        }
+
+        // Move cursor up to overwrite previous options
+        std::cout << "\033[" << options.size() << "A";
+    }
+
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    return options[selected];
 }
 
 int main(int argc, char* argv[]) {
@@ -131,19 +184,24 @@ int main(int argc, char* argv[]) {
 
     commands["load"] = [&]() {
         if (argc == 3 && std::string(argv[2]) == "plugin") {
-            std::cout << "Select LLM type (local/remote): ";
-            std::string llmType;
-            std::cin >> llmType;
+            std::vector<std::string> llmTypes = {"local", "remote"};
+            std::string llmType = selectOption(llmTypes);
 
             if (llmType == "remote") {
+                std::vector<std::string> llmNames;
+                for (const auto& llm : knownLLMs) {
+                    llmNames.push_back(llm.name);
+                }
+                std::string selectedLLM = selectOption(llmNames);
+
                 std::cout << "Enter API key: ";
                 std::string apiKey = getHiddenInput();
 
                 std::cout << "Store API key permanently? (yes/no): ";
                 std::string storeOption;
-                std::cin >> storeOption;
+                std::getline(std::cin, storeOption);
 
-                if (storeOption == "yes") {
+                if (storeOption.empty() || storeOption == "yes" || storeOption == "y") {
                     const char* homeDir = getenv("HOME");
                     if (homeDir) {
                         std::string filePath = std::string(homeDir) + "/.cpp-manager/.llm.key";
@@ -151,10 +209,12 @@ int main(int argc, char* argv[]) {
                     } else {
                         std::cerr << "Unable to locate home directory.\n";
                     }
-                } else {
+                } else if (storeOption == "no" || storeOption == "n") {
                     std::string projectPath = ".";
                     std::string filePath = projectPath + "/.llm.key";
                     storeApiKey(apiKey, filePath);
+                } else {
+                    std::cerr << "Invalid option. API key not stored.\n";
                 }
             } else if (llmType == "local") {
                 // Logic to load local LLM
